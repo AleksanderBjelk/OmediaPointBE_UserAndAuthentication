@@ -1,0 +1,13 @@
+<configuration>
+    <!--console Appender (loggar till konsolen) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <!--definierar mönstret, ned till sekunder, även färgläggning -->
+            <pattern>%boldYellow(%d{yyyy-MM-dd HH:mm:ss}) %boldGreen([%thread]) %highlight(%-5level) %boldMagenta(%logger{36}) - %highlight(%msg%n)</pattern>
+        </encoder>
+    </appender>
+    <!--root loggnivå INFO, vilket fångar alla nivåer (DEBUG, INFO, WARN, ERROR) -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>

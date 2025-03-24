@@ -1,0 +1,18 @@
+micronaut:
+  application:
+    name: userAndAuthentication
+
+  router:
+    static-resources:
+      swagger:
+        paths: classpath:META-INF/swagger
+        mapping: /swagger/**
+      swagger-ui:
+        paths: classpath:META-INF/swagger/views/swagger-ui
+        mapping: /swagger-ui/**
+
+r2dbc:
+  datasources:
+    default:
+      url: r2dbc:mariadb://localhost:3307/omediapoint
+      username: root
