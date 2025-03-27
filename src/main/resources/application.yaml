@@ -11,6 +11,14 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
 
+  server:
+    ssl:
+      enabled: true
+      key-store:
+        path: "classpath:keystore.p12"
+        password: "omediapoint"
+        type: "PKCS12"
+
 r2dbc:
   datasources:
     default:
