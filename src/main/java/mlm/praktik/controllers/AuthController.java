@@ -4,7 +4,7 @@ import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.HttpRequest;
-import mlm.praktik.services.AuthService;  // New import
+import mlm.praktik.services.AuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.HashMap;

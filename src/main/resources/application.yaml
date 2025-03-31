@@ -11,6 +11,12 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
 
+#google:
+#  clientid: "597932872393-f75kmuhqikket5k7kv31irvgr8ghh82j.apps.googleusercontent.com"
+
+#jwt:
+#   secret: "KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM="
+
 r2dbc:
   datasources:
     default:
