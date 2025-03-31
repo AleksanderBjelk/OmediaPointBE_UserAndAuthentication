@@ -20,7 +20,7 @@ import java.util.Map;
 
 public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
-åå
+
     private static final String GOOGLE_CLIENT_ID = "597932872393-f75kmuhqikket5k7kv31irvgr8ghh82j.apps.googleusercontent.com";
 
     private static final Key JWT_SECRET = Keys.hmacShaKeyFor("KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM=".getBytes(StandardCharsets.UTF_8));
