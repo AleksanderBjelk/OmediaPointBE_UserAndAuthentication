@@ -11,12 +11,40 @@ micronaut:
         paths: classpath:META-INF/swagger/views/swagger-ui
         mapping: /swagger-ui/**
 
+  security:
+    enabled: true
+    authentication: bearer
+    token:
+      jwt:
+        signatures:
+          secret:
+            generator:
+              secret: KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM=
+      generator:
+        access-token-expiration: 1h
+      claims-validators:
+        issuer: "https://accounts.google.com"
+    intercept-url-map:
+      - pattern: "/auth/token"
+        access: ["isAnonymous()"] #Lets everyone access this endpoint with no validation
+      - pattern: "/admin/**"
+        access: ["isAnonymous()"]
+      - pattern: "/secure/**"
+        access: ["isAuthenticated()"] #Validates the token in the bearer against the secret above
+      - pattern: "/user/**"
+        access: ["isAnonymous()"]
+      - pattern: "/swagger-ui/**"
+        access: [ "isAnonymous()" ]
+      - pattern: "/swagger/**"
+        access: [ "isAnonymous()" ]
+
+
 #google:
+
 #  clientid: "597932872393-f75kmuhqikket5k7kv31irvgr8ghh82j.apps.googleusercontent.com"
-
 #jwt:
-#   secret: "KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM="
 
+#   secret: "KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM="
 r2dbc:
   datasources:
     default:

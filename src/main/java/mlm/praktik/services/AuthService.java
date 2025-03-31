@@ -4,33 +4,33 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
-
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import io.micronaut.security.token.jwt.generator.JwtTokenGenerator;
+import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+@Singleton
 public class AuthService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     private static final String GOOGLE_CLIENT_ID = "597932872393-f75kmuhqikket5k7kv31irvgr8ghh82j.apps.googleusercontent.com";
+    private final JwtTokenGenerator jwtTokenGenerator;
+    private final GoogleIdTokenVerifier verifier;
 
-    private static final Key JWT_SECRET = Keys.hmacShaKeyFor("KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM=".getBytes(StandardCharsets.UTF_8));
-
-    public Map<String, String> validateToken(String idTokenString) {
-        Map<String, String> response = new HashMap<>();
-
-        GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
+    public AuthService(JwtTokenGenerator jwtTokenGenerator) {
+        this.jwtTokenGenerator = jwtTokenGenerator;
+        this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
                 .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
                 .build();
+    }
+
+    //TODO implement a way to check if user exists in DB and if not write the user to DB
+    public Map<String, String> validateToken(String idTokenString) {
+        Map<String, String> response = new HashMap<>();
 
         try {
             GoogleIdToken idToken = verifier.verify(idTokenString);
@@ -41,18 +41,21 @@ public class AuthService {
                 String name = (String) payload.get("name");
                 String picture = (String) payload.get("picture");
                 String aud = (String) payload.get("aud");
+
                 logger.info("Token is valid. Token info: {}, {}, {}, {}", sub, email, name, picture);
 
-                String jwt = Jwts.builder()
-                        .setSubject(sub)
-                        .claim("email", email)
-                        .claim("name", name)
-                        .claim("picture", picture)
-                        .claim("aud", aud)
-                        .setIssuedAt(new Date())
-                        .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-                        .signWith(JWT_SECRET, SignatureAlgorithm.HS256)
-                        .compact();
+                // Create claims map
+                Map<String, Object> claims = new HashMap<>();
+                claims.put("sub", sub);
+                claims.put("email", email);
+                claims.put("name", name);
+                claims.put("picture", picture);
+                claims.put("aud", aud);
+                // Add any other claims you need
+
+                // Generate JWT token
+                String jwt = jwtTokenGenerator.generateToken(claims)
+                        .orElseThrow(() -> new RuntimeException("Failed to generate JWT"));
 
                 response.put("message", "Token verified");
                 response.put("token", jwt);

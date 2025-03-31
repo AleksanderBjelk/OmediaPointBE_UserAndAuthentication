@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 import jakarta.inject.Inject;
 
-@Controller()
+@Controller("/user")
 public class UserAccountController {
 
     @Inject
@@ -18,12 +18,12 @@ public class UserAccountController {
         this.userService = userService;
     }
 
-    @Delete("/user/delete")
+    @Delete("/delete")
     public Mono<Long> deleteUser(String id) {
         return userService.deleteUser(id);
     }
 
-    @Put("/user/update")
+    @Put("/update")
     public Mono<UserEntity> updateUser(@Body UserEntity userEntity){
         return userService.updateUser(userEntity);
     }
