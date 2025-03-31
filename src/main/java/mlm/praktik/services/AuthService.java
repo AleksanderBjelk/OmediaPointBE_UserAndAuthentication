@@ -4,12 +4,18 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.DateTime;
 import io.micronaut.security.token.jwt.generator.JwtTokenGenerator;
 import jakarta.inject.Singleton;
+import mlm.praktik.entities.UserEntity;
+import mlm.praktik.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,12 +26,16 @@ public class AuthService {
     private static final String GOOGLE_CLIENT_ID = "597932872393-f75kmuhqikket5k7kv31irvgr8ghh82j.apps.googleusercontent.com";
     private final JwtTokenGenerator jwtTokenGenerator;
     private final GoogleIdTokenVerifier verifier;
+    private final UserService userService;
+    private final UserRepository userRepository;
 
-    public AuthService(JwtTokenGenerator jwtTokenGenerator) {
+    public AuthService(JwtTokenGenerator jwtTokenGenerator, UserService userService, UserRepository userRepository) {
         this.jwtTokenGenerator = jwtTokenGenerator;
         this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
                 .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
                 .build();
+        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     //TODO implement a way to check if user exists in DB and if not write the user to DB
@@ -56,6 +66,11 @@ public class AuthService {
                 // Generate JWT token
                 String jwt = jwtTokenGenerator.generateToken(claims)
                         .orElseThrow(() -> new RuntimeException("Failed to generate JWT"));
+
+                UserEntity userEntity = new UserEntity(sub, name, email, picture, LocalDateTime.now());
+
+                userService.saveOrUpdateUser(userEntity)
+                        .subscribe(user -> {});
 
                 response.put("message", "Token verified");
                 response.put("token", jwt);

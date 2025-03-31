@@ -5,11 +5,16 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.serde.annotation.Serdeable;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Null;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 @Serdeable
 @MappedEntity("users")
-
+@Getter
+@Setter
 public class UserEntity {
 
     @Id
@@ -22,56 +27,33 @@ public class UserEntity {
 
     private String picture;
 
-    @DateCreated
+    private String role;
+
     private LocalDateTime lastLoginAt;
 
-    public UserEntity(String id, String name, String email, String picture, LocalDateTime lastLoginAt) {
+    private String apiToken;
+
+    @Null
+    @DateCreated
+    private LocalDateTime createdAt;
+
+    public UserEntity(String id, String name, String email, String picture, String role ,LocalDateTime lastLoginAt, String apiToken, LocalDateTime createdAt) {
         this.id = id;
         this.name = name;
         this.email = email;
         this.picture = picture;
+        this.role = role;
         this.lastLoginAt = lastLoginAt;
+        this.apiToken = apiToken;
+        this.createdAt = createdAt;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
+    public UserEntity(String id, String name, String email, String picture, LocalDateTime now) {
         this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPicture() {
-        return picture;
-    }
-
-    public void setPicture(String picture) {
         this.picture = picture;
+        this.lastLoginAt = now;
+        this.id = id;
+
     }
-
-    public LocalDateTime getLastLoginAt() {
-        return lastLoginAt;
-    }
-
-    public void setLastLoginAt(LocalDateTime lastLoginAt) {
-        this.lastLoginAt = lastLoginAt;
-    }
-
-
 }

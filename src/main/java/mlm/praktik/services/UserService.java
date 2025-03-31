@@ -46,6 +46,37 @@ public class UserService {
                 });
     }
 
+    public Mono<UserEntity> saveOrUpdateUser(UserEntity user) {
+        logger.info("Attempting to save or update user with ID: {}", user.getId());
+
+        return userRepository.findById(user.getId())
+                .flatMap(existingUser -> {
+                    // Existing user, update fields
+                    logger.info("User found, updating details for user ID: {}", user.getId());
+                    existingUser.setName(user.getName());
+                    existingUser.setEmail(user.getEmail());
+                    existingUser.setPicture(user.getPicture());
+                    existingUser.setRole(user.getRole() != null ? user.getRole() : "user");
+                    existingUser.setApiToken(user.getApiToken() != null ? user.getApiToken() : "1234");
+                    existingUser.setLastLoginAt(LocalDateTime.now());
+
+                    return userRepository.update(existingUser)
+                            .onErrorMap(ex -> new MessageExceptionHandler.DatabaseOperationException("Failed to update user: " + ex.getMessage()));
+                })
+                .switchIfEmpty(
+                        // New user, explicitly set createdAt
+                        userRepository.save(new UserEntity(
+                                        user.getId(), user.getName(), user.getEmail(), user.getPicture(),
+                                        "user", LocalDateTime.now(), "1234", LocalDateTime.now()))
+                                .onErrorMap(ex -> {
+                                    logger.error("Failed to save new user: {}", user.getId(), ex);
+                                    return new MessageExceptionHandler.DatabaseOperationException("Failed to save user: " + ex.getMessage());
+                                })
+                )
+                .doOnTerminate(() -> logger.info("User save or update process completed for user ID: {}", user.getId()));
+    }
+
+
     public Mono<Long> deleteUser(String id) {
         return userRepository.deleteById(id)
                 .doOnTerminate(() -> logger.info("User with ID {} deleted successfully", id))
