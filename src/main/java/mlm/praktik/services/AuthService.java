@@ -27,15 +27,13 @@ public class AuthService {
     private final JwtTokenGenerator jwtTokenGenerator;
     private final GoogleIdTokenVerifier verifier;
     private final UserService userService;
-    private final UserRepository userRepository;
 
-    public AuthService(JwtTokenGenerator jwtTokenGenerator, UserService userService, UserRepository userRepository) {
+    public AuthService(JwtTokenGenerator jwtTokenGenerator, UserService userService) {
         this.jwtTokenGenerator = jwtTokenGenerator;
         this.verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new JacksonFactory())
                 .setAudience(Collections.singletonList(GOOGLE_CLIENT_ID))
                 .build();
         this.userService = userService;
-        this.userRepository = userRepository;
     }
 
     //TODO implement a way to check if user exists in DB and if not write the user to DB
@@ -54,16 +52,15 @@ public class AuthService {
 
                 logger.info("Token is valid. Token info: {}, {}, {}, {}", sub, email, name, picture);
 
-                // Create claims map
+                //Create claims map
                 Map<String, Object> claims = new HashMap<>();
                 claims.put("sub", sub);
                 claims.put("email", email);
                 claims.put("name", name);
                 claims.put("picture", picture);
                 claims.put("aud", aud);
-                // Add any other claims you need
 
-                // Generate JWT token
+                //Generate JWT token
                 String jwt = jwtTokenGenerator.generateToken(claims)
                         .orElseThrow(() -> new RuntimeException("Failed to generate JWT"));
 

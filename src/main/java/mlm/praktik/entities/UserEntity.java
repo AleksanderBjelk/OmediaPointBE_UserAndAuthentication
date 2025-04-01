@@ -23,17 +23,19 @@ public class UserEntity {
     @NotBlank
     private String name;
 
+    @NotBlank
     private String email;
 
+    @NotBlank
     private String picture;
 
+    @NotBlank
     private String role;
 
     private LocalDateTime lastLoginAt;
 
     private String apiToken;
 
-    @Null
     @DateCreated
     private LocalDateTime createdAt;
 
@@ -54,6 +56,5 @@ public class UserEntity {
         this.picture = picture;
         this.lastLoginAt = now;
         this.id = id;
-
     }
 }

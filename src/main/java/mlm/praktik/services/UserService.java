@@ -41,7 +41,7 @@ public class UserService {
         return userRepository.save(user)
                 .doOnTerminate(() -> logger.info("Creating user with name {}", user.getName()))
                 .onErrorResume(ex -> {
-                    logger.error("Failed to create user", ex); // Include the exception in the log
+                    logger.error("Failed to create user", ex); //Include the exception in the log
                     return Mono.error(new MessageExceptionHandler.DatabaseOperationException("Failed to create user: " + ex.getMessage()));
                 });
     }
@@ -51,7 +51,7 @@ public class UserService {
 
         return userRepository.findById(user.getId())
                 .flatMap(existingUser -> {
-                    // Existing user, update fields
+                    //Existing user, update fields
                     logger.info("User found, updating details for user ID: {}", user.getId());
                     existingUser.setName(user.getName());
                     existingUser.setEmail(user.getEmail());
@@ -64,7 +64,7 @@ public class UserService {
                             .onErrorMap(ex -> new MessageExceptionHandler.DatabaseOperationException("Failed to update user: " + ex.getMessage()));
                 })
                 .switchIfEmpty(
-                        // New user, explicitly set createdAt
+                        //New user, explicitly set createdAt
                         userRepository.save(new UserEntity(
                                         user.getId(), user.getName(), user.getEmail(), user.getPicture(),
                                         "user", LocalDateTime.now(), "1234", LocalDateTime.now()))
