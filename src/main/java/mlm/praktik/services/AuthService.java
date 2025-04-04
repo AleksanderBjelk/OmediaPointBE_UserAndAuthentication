@@ -1,21 +1,20 @@
 package mlm.praktik.services;
 
+import com.nimbusds.jwt.SignedJWT;
+import com.nimbusds.jose.JWSVerifier;
+import com.nimbusds.jose.crypto.MACVerifier;
+import java.util.Base64;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import io.micronaut.security.token.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureException;
 import io.micronaut.security.token.jwt.generator.JwtTokenGenerator;
 import jakarta.inject.Singleton;
 import mlm.praktik.entities.UserEntity;
+import mlm.praktik.models.UserModel;
 import mlm.praktik.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.security.SignatureException;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,6 +29,7 @@ public class AuthService {
     private final GoogleIdTokenVerifier verifier;
     private final UserService userService;
     private final UserRepository userRepository;
+    UserModel userModel = new UserModel();
 
     public AuthService(JwtTokenGenerator jwtTokenGenerator, UserService userService, UserRepository userRepository) {
         this.jwtTokenGenerator = jwtTokenGenerator;
@@ -53,7 +53,7 @@ public class AuthService {
                 String name = (String) payload.get("name");
                 String picture = (String) payload.get("picture");
                 String aud = "omediapoint";
-                String exp = String.valueOf(System.currentTimeMillis() + 300000);
+                Long exp = System.currentTimeMillis() + 300000;
 
                 logger.info("Token is valid. Token info: {}, {}", sub, aud);
 
@@ -87,54 +87,57 @@ public class AuthService {
         return response;
     }
 
-
     public Map<String, String> validateAccessTokenAndCreateBEJWT(String accessTokenString) {
         Map<String, String> response = new HashMap<>();
+
         try {
-            //TODO Han måste vara full som tror att vi kan använda GoogleIdToken här?
-            GoogleIdToken accessToken = verifier.verify(accessTokenString);
-            if (accessToken != null) {
-                GoogleIdToken.Payload payload = accessToken.getPayload();
-                String aud = payload.getAudience();
-                String sub = payload.getSubject();
-                long exp = payload.getExpirationTimeSeconds();
+            SignedJWT signedJWT = SignedJWT.parse(accessTokenString);
 
-                if (!aud.equals("omediapoint")) {
-                    response.put("message", "Invalid audience in token");
-                    return response;
-                }
+            byte[] secretBytes = Base64.getDecoder().decode("KCvxfSSBImPIqQrYOBvr1sGOHFeEfvMsQcqX3eh6fKM=");
 
-                if (exp < Instant.now().getEpochSecond()) {
-                    response.put("message", "Token has expired");
-                    return response;
-                }
+            JWSVerifier verifier = new MACVerifier(secretBytes);
 
-                logger.info("Token is valid. Token info: {}, {}", sub, aud);
-
-                UserEntity userEntity = userRepository.findById(sub).block();
-                if (userEntity == null) {
-                    response.put("message", "User not found");
-                    return response;
-                }
-
-                Map<String, Object> claims = new HashMap<>();
-                claims.put("sub", userEntity.getId());
-                claims.put("email", userEntity.getEmail());
-                claims.put("name", userEntity.getName());
-                claims.put("roles", userEntity.getRole());
-                claims.put("exp", String.valueOf(System.currentTimeMillis() + 3600000));
-                claims.put("aud", "omediapoint_backend");
-
-                String beJwt = jwtTokenGenerator.generateToken(claims)
-                        .orElseThrow(() -> new RuntimeException("Failed to generate BE_JWT"));
-
-                response.put("message", "Access token verified and BE_JWT created");
-                response.put("be_jwt", beJwt);
-
-            } else {
-                logger.warn("Invalid Access token.");
-                response.put("message", "Invalid access token");
+            if (!signedJWT.verify(verifier)) {
+                logger.warn("Invalid token signature.");
+                response.put("message", "Invalid token signature");
+                return response;
             }
+
+            var claimsSet = signedJWT.getJWTClaimsSet();
+            String sub = claimsSet.getStringClaim("sub");
+            String aud = claimsSet.getStringClaim("aud");
+
+            logger.info("Token is valid. Token info: {}, {}", sub, aud);
+
+
+            userRepository.findById(sub)
+                    .subscribe(user -> {
+                        userModel = new UserModel(
+                                user.getId(),
+                                user.getName(),
+                                user.getEmail(),
+                                user.getPicture(),
+                                user.getRole()
+                        );
+                    });
+
+            Long jwtExp = System.currentTimeMillis() + 3600000;
+
+
+            Map<String, Object> newClaims = new HashMap<>();
+            newClaims.put("sub", sub);
+            newClaims.put("exp", jwtExp);
+            newClaims.put("aud", aud);
+            newClaims.put("name", userModel.getName());
+            newClaims.put("email", userModel.getEmail());
+            newClaims.put("picture", userModel.getPicture());
+            newClaims.put("role", userModel.getRole());
+
+            String JWT = jwtTokenGenerator.generateToken(newClaims)
+                    .orElseThrow(() -> new RuntimeException("Failed to generate JWT"));
+
+            response.put("message", "Token verified");
+            response.put("token", JWT);
         } catch (Exception e) {
             logger.error("Token validation error: ", e);
             response.put("message", "Token validation error: " + e.getMessage());

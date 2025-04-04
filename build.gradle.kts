@@ -44,6 +44,8 @@ dependencies {
     testImplementation("org.mockito:mockito-junit-jupiter")
     testImplementation("org.testcontainers:mariadb")
     testImplementation("org.testcontainers:junit-jupiter")
+
+    implementation("com.nimbusds:nimbus-jose-jwt:9.31")
 }
 
 

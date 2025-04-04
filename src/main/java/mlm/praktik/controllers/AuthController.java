@@ -48,13 +48,13 @@ public class AuthController {
     }
 
     @Get("/access-token")
-    public Map<String, String> validateAccessTokenAndCreateBEJWTToken(HttpRequest<?> request) {
+    public Map<String, String> validateAccessTokenAndCreateBEJWT(HttpRequest<?> request) {
         String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String accessTokenString = authHeader.substring(7);
             try {
-                Map<String, String> response = authService.validateAccessTokenAndCreateBEJWTToken(accessTokenString);
+                Map<String, String> response = authService.validateAccessTokenAndCreateBEJWT(accessTokenString);
                 if (response.containsKey("message") && response.get("message").equals("Invalid access_token token")) {
                     logger.warn("Invalid access_token");
                     response.put("message", "The provided token is invalid.");
