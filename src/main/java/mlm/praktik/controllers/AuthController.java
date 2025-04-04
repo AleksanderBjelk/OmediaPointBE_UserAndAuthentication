@@ -20,14 +20,14 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @Get("/token")
-    public Map<String, String> token(HttpRequest<?> request) {
+    @Get("/id-token")
+    public Map<String, String> validateIdTokenAndCreateAccessToken(HttpRequest<?> request) {
         String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String idTokenString = authHeader.substring(7);
             try {
-                Map<String, String> response = authService.validateToken(idTokenString);
+                Map<String, String> response = authService.validateIdTokenAndCreateAccessToken(idTokenString);
                 if (response.containsKey("message") && response.get("message").equals("Invalid ID token")) {
                     logger.warn("Invalid ID token");
                     response.put("message", "The provided token is invalid.");
@@ -40,7 +40,34 @@ public class AuthController {
                 return errorResponse;
             }
         } else {
-            logger.warn("No valid token found in the request");
+            logger.warn("No valid id_token found in the request");
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "No valid token found.");
+            return response;
+        }
+    }
+
+    @Get("/access-token")
+    public Map<String, String> validateAccessTokenAndCreateBEJWTToken(HttpRequest<?> request) {
+        String authHeader = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
+
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String accessTokenString = authHeader.substring(7);
+            try {
+                Map<String, String> response = authService.validateAccessTokenAndCreateBEJWTToken(accessTokenString);
+                if (response.containsKey("message") && response.get("message").equals("Invalid access_token token")) {
+                    logger.warn("Invalid access_token");
+                    response.put("message", "The provided token is invalid.");
+                }
+                return response;
+            } catch (Exception e) {
+                logger.error("Token validation failed: ", e);
+                Map<String, String> errorResponse = new HashMap<>();
+                errorResponse.put("message", "Token validation error: " + e.getMessage());
+                return errorResponse;
+            }
+        } else {
+            logger.warn("No valid access_token found in the request");
             Map<String, String> response = new HashMap<>();
             response.put("message", "No valid token found.");
             return response;
